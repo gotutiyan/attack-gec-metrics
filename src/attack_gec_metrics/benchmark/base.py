@@ -27,7 +27,7 @@ class BenchmarkBase(abc.ABC):
         '''
         srcs = self.srcs
         hyps = self.hyps
-        
+        all_scores = dict()
         for metric in metrics:
             scores = dict()
             if 'LLMKobayashi' not in metric.__class__.__name__:
@@ -40,7 +40,8 @@ class BenchmarkBase(abc.ABC):
             self.save_json(
                 scores, f'{metric.__class__.__name__}.json'
             )
-        return scores
+            all_scores[metric.__class__.__name__] = scores
+        return all_scores
     
     def latexfy(
         self,

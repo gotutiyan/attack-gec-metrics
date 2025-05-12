@@ -6,7 +6,7 @@ This is the official repository of the following paper:
 
 # Install
 
-```python
+```sh
 pip install git+https://github.com/naist-nlp/attack-gec-metrics
 ```
 
@@ -23,18 +23,19 @@ UV user can `uv add git+https://github.com/naist-nlp/attack-gec-metrics`.
 
 ## Attackers
 
-- `attack_gec_metrics.AtackerForSOME` intends to attack SOME metric.
-- `attack_gec_metrics.AttackerForScribendi` intends to attack Scribendi metric.
-- `attack_gec_metrics.AttackerForIMPARA` intends to attack IMPARA metric.
-- `attack_gec_metrics.AttackerForLLM` intends to attack LLM metric.
+- `attack_gec_metrics.AtackerForSOME` is an attack on SOME metric.
+- `attack_gec_metrics.AttackerForScribendi` is an attack on Scribendi metric.
+- `attack_gec_metrics.AttackerForIMPARA` is an attack on IMPARA metric.
+- `attack_gec_metrics.AttackerForLLMSent` is an attack on LLM-S metric.
 
-All attackers can be usd with the unified interface. This is an example to use `AtackerForScribendi`.
+All attackers can be used with the unified interface. This is an example to use `AttackerForScribendi`.
 ```python
 from attack_gec_metrics.attackers import AttackerForScribendi
 from gec_datasets import GECDatasets
 srcs = GECDatasets('exp-datasets').load('bea19-dev').srcs[:5]
 attacker = AttackerForScribendi()
 attacker.config.verbose = True
+# All Attacker classes have .correct() to obtain attack results.
 attack_hyps = attacker.correct(srcs)
 
 for i in range(5):
@@ -43,30 +44,29 @@ for i in range(5):
     print()
 ```
 
-Our results are in here: [attack_results/]().
+Our results are in here: [attack_results/](./attack_results/).
 
-All classes are implemented based on `gec_attack.AttackerBase`. You can use this class to build your custom attack class.
+All classes are implemented based on `attack_gec_metrics.AttackerBase`. You can use this class to build your custom attack class.
 
 ```python
-# To create custom attackers
+# An example to build your custom attacker.
 from attack_gec_metrics import AttackerBase
 
 class CustomAttacker(AttackerBase):
     def __init__(self, config=None):
         super().__init__(config)
     
-    def correct(self, sources: list[str]) -> list[str]
+    def correct(self, sources: list[str]) -> list[str]:
         raise NotImplementedError
 ```
 
 ## Benchmark
 
-To facilitate reproduction of our experiments, we provide Benchmark class.
+The benchmark class simplifies experimentation by providing a fixed system output. All necessary data will be automatically downloaded.
 
 - `attack_gec_metrics.BenchmarkPillars` corresponds to Table 1.
-- `attack_gec_metrics.BenchmarkSEEDA` corresponds to Table 3 (in appendix).
+- `attack_gec_metrics.BenchmarkSEEDA` corresponds to Table 6 (in appendix).
 
-Each Benchmark class provides the fixed system hypotheses and evaluate them using input metrics. You can assess the score by inputting metric classes.
 
 ```python
 from attack_gec_metrics import BenchmarkPillars
@@ -86,7 +86,7 @@ bench.run(metrics)
 # bench.subsetalize()  # returns nothing but the bench.srcs and bench.hyps are now subset.
 ```
 
-After that, the results are saved to `exp-outputs/<benchmark class name>/{SOME | Scribendi | IMPARA}.json`. Each JOSN contains the scores for the system set defined in Benchmark class. The order is the same as `<benchmark class>.load_name()`.
+After that, the results are saved to `exp-outputs/<benchmark class name>/{SOME | Scribendi | IMPARA}.json`. Each JSON contains the scores for the system set defined in the Benchmark class. The order is the same as `<benchmark class>.load_name()`.
 
 ```
 exp-outputs/BenchmarkSEEDA/
