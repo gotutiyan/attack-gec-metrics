@@ -64,7 +64,7 @@ class CustomAttacker(AttackerBase):
 
 The benchmark class simplifies experimentation by providing a fixed system output. All necessary data will be automatically downloaded.
 
-- `attack_gec_metrics.BenchmarkPillars` corresponds to Table 1.
+- `attack_gec_metrics.BenchmarkPillars` corresponds to Table 2.
 - `attack_gec_metrics.BenchmarkSEEDA` corresponds to Table 6 (in appendix).
 
 
@@ -89,7 +89,7 @@ bench.run(metrics)
 After that, the results are saved to `exp-outputs/<benchmark class name>/{SOME | Scribendi | IMPARA}.json`. Each JSON contains the scores for the system set defined in the Benchmark class. The order is the same as `<benchmark class>.load_name()`.
 
 ```
-exp-outputs/BenchmarkSEEDA/
+exp-outputs/BenchmarkPillars/
 ├── IMPARA.json
 ├── Scribendi.json
 └── SOME.json
