@@ -1,6 +1,5 @@
 from .base import AttackerBase
 from dataclasses import dataclass, field
-from gec_datasets import GECDatasets
 from gec_metrics import get_metric
 from semsis.encoder import SentenceEncoder
 from semsis.kvstore import KVStore
@@ -16,13 +15,9 @@ import pprint
 class AttackerForIMPARA(AttackerBase):
     @dataclass
     class Config(AttackerBase.Config):
-        data_ids: list[str] = field(
-            default_factory=lambda: [
-                'lang8-train',
-                'fce-train', 'wi-locness-train', 'nucle-train',
-                'troy-1bw-train', 'troy-blogs-train'
-            ]
-        )
+        corpus: list[str] = None
+        model: str =  'google-bert/bert-base-cased'
+        representation: str = 'avg'
         index_dir: str = 'exp-datasets/index'
         k: int = 256
 
@@ -30,30 +25,27 @@ class AttackerForIMPARA(AttackerBase):
         super().__init__(config)
         Path(self.config.index_dir).mkdir(exist_ok=True, parents=True)
         self.impara = get_metric('impara')()
-        gec = GECDatasets('exp-datasets')
-        self.text = []
-        self.config.data_ids = sorted(self.config.data_ids)
-        for data_id in self.config.data_ids:
-            self.text += gec.load(data_id).refs[0]
         self.encoder = SentenceEncoder.build(
-            "bert-base-cased",
-            'avg'
+            self.config.model,
+            self.config.representation
         )
         if torch.cuda.is_available():
             self.encoder.cuda()
-        data_name = 'SEP'.join(self.config.data_ids)
-        self.index_dir = Path(self.config.index_dir) / f'{data_name}'
+        self.index_dir = Path(self.config.index_dir)
         self.index_dir.mkdir(exist_ok=True, parents=True)
         KVSTORE_PATH = self.index_dir / 'kv.bin'
         INDEX_PATH = self.index_dir / 'index.bin'
         INDEX_CONFIG_PATH = self.index_dir / 'config.yaml'
         if INDEX_PATH.exists():
+            # If the index exists, load this
             self.retriver = self.load_index(
                 INDEX_PATH, INDEX_CONFIG_PATH
             )
         else:
+            # Otherwise, create the index.
+            # This takes a little long time depending on the data size.
             self.retriver = self.build_index(
-                self.encoder, self.text,
+                self.encoder, self.config.corpus,
                 KVSTORE_PATH, INDEX_PATH, INDEX_CONFIG_PATH,
             )
         self.save_data = []
@@ -76,6 +68,8 @@ class AttackerForIMPARA(AttackerBase):
         TEXT = text
         dim = encoder.get_embed_dim()
         num_sentences = len(TEXT)
+        # The retrieval process is entirely dependent on the Semsis library.
+        # https://github.com/de9uch1/semsis
         with KVStore.open(kv_path, mode="w") as kvstore:
             # Initialize the kvstore.
             kvstore.new(dim)
@@ -123,10 +117,9 @@ class AttackerForIMPARA(AttackerBase):
                 idxs = indices[example_id]
                 dis = distance[example_id]
                 hyp_candidates = [
-                    self.text[i] for knn_id, i in enumerate(idxs)
+                    self.config.corpus[i] for knn_id, i in enumerate(idxs)
                     if dis[knn_id] > self.impara.config.threshold
                 ]
-                pprint.pprint(hyp_candidates)
                 if hyp_candidates == []:
                     # If there is no appropriate candidates, simply return the source.
                     # The source can always pass the similarity estimator threshold.
@@ -139,7 +132,7 @@ class AttackerForIMPARA(AttackerBase):
                 best_hyp = sorted(
                     list(zip(hyp_candidates, scores, strict=True)),
                     key=lambda x: x[1]
-                )[-1][0]
+                )[-1][0]  # [-1] is the max index of the scores, [0] refers to hyp_candidate
                 hyps.append(best_hyp)
 
                 best_idx = hyp_candidates.index(best_hyp)
@@ -152,5 +145,4 @@ class AttackerForIMPARA(AttackerBase):
                     'k': len(dis)
                 }
                 self.save_data.append(save_elem)
-        print('end')
         return hyps

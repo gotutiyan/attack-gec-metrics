@@ -5,6 +5,8 @@ class AttackerBase(abc.ABC):
     @dataclass
     class Config:
         verbose: bool = False
+        batch_size: int = 32
+        show_tqdm=True
 
     def __init__(self, config=None) -> None:
         self.config = config if config is not None else self.Config()

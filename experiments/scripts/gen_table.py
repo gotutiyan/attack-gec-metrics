@@ -1,26 +1,9 @@
-from attack_gec_metrics import get_bench
+from benchmark import get_bench
 from gec_metrics.metrics import SOME, Scribendi, IMPARA, LLMKobayashi24HFSent
 import argparse
 
 def table():
-    
     benchmark = get_bench('pillars')('exp-outputs')
-    names = [
-        'SOME.json',
-        'Scribendi.json',
-        'IMPARA.json',
-        'LLMKobayashi24OpenAISent/gpt-4o-mini-2024-07-18.json',
-        'LLMKobayashi24HFSent/google/gemma-3-27b-it.json',
-        'LLMKobayashi24HFSent/Qwen/Qwen3-32B.json',
-        'LLMKobayashi24HFSent/meta-llama/Meta-Llama-3-70B-Instruct.json',
-        'LLMKobayashi24HFSent/meta-llama/Llama-3.3-70B-Instruct.json',
-    ]
-    scores = {name: benchmark.load_json(name) for name in names}
-    latex_table = benchmark.latexfy(scores, benchmark.load_name())
-    print(latex_table)
-
-def table2():
-    benchmark = get_bench('pilarrs')('exp-outputs')
     names = [
         'SOME.json',
         'Scribendi.json',
@@ -35,6 +18,25 @@ def table2():
     scores = {name: benchmark.load_json(name) for name in names}
     latex_table = benchmark.latexfy(scores, benchmark.load_name())
     print(latex_table)
+
+def ensemble():
+    benchmark = get_bench('pillars')('exp-outputs')
+    names = [
+        'SOME.json',
+        'Scribendi.json',
+        'IMPARA.json',
+        'LLMKobayashi24OpenAISent/gpt-4o-mini-2024-07-18.json',
+        'LLMKobayashi24HFSent/google/gemma-3-27b-it.json',
+        'LLMKobayashi24HFSent/meta-llama/Llama-3.3-70B-Instruct.json',
+        'LLMKobayashi24OpenAIEdit/gpt-4o-mini-2024-07-18.json',
+        'LLMKobayashi24HFEdit/google/gemma-3-27b-it.json',
+        'LLMKobayashi24HFEdit/meta-llama/Llama-3.3-70B-Instruct.json'
+    ]
+    scores = {name: benchmark.load_json(name) for name in names}
+    ens_scores = benchmark.ensemble(scores)
+    latex_table = benchmark.latexfy(ens_scores, benchmark.load_name())
+    print(latex_table)
+    
 
 def table_t():
     benchmark = get_bench('pillars')('exp-outputs')
@@ -71,8 +73,8 @@ def table_t():
     print(benchmark.latexfy_transpose(scores, benchmark.load_name()))
 
 def main(args):
-    # table2()
-    table()
+    ensemble()
+    # table()
     # table_t()
     
 

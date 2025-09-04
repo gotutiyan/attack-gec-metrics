@@ -10,6 +10,7 @@ class AttackerForScribendi(AttackerBase):
     @dataclass
     class Config(AttackerBase.Config):
         mask_model: str = "google-bert/bert-base-cased"
+        top_k: int = 64
 
     def __init__(self, config=None) -> None:
         super().__init__(config)
@@ -18,9 +19,8 @@ class AttackerForScribendi(AttackerBase):
             'fill-mask',
             model=self.config.mask_model,
             device=device,
-            top_k=64
+            top_k=self.config.top_k
         )
-        # unmasker("Hello I'm a [MASK] model.")
         self.scribendi = Scribendi()
         self.nlp = spacy.load('en_core_web_sm')
 
@@ -31,7 +31,7 @@ class AttackerForScribendi(AttackerBase):
     def correct(self, sources: list[str]):
         hyps = []
         src_ppls = self.scribendi.ppl(sources)
-        for sent_id, src in tqdm(enumerate(sources), total=len(sources)):
+        for sent_id, src in tqdm(enumerate(sources), total=len(sources), disable=not self.config.show_tqdm):
             tokens = src.split(' ')
             best_hyp = src
             found = False
@@ -46,9 +46,10 @@ class AttackerForScribendi(AttackerBase):
                 hyp_ppls = self.scribendi.ppl(hyp_cands)
                 is_win = [src_ppls[sent_id] > h for h in hyp_ppls]
                 for i, w in enumerate(is_win):
-                    if not w:
+                    if not w:  # ignore lose samples
                         continue
                     if tokens[token_id] == fill_results[i]['token_str']:
+                        # Ignore if same as source
                         continue
                     best_hyp = hyp_cands[i]
                     found = True
@@ -64,5 +65,7 @@ class AttackerForScribendi(AttackerBase):
         scores = self.scribendi.score_sentence(sources, hyps)
         for i in range(len(scores)):
             if scores[i] == -1:
+                # -1 means surface agreement filtered the hypotheses.
+                # In this case, it uses the source as the hypothesis to minimize the penalty.
                 hyps[i] = sources[i]
         return hyps

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, asdict
 from gec_metrics.metrics import LLMKobayashi24HFSent, LLMKobayashi24OpenAISent, LLMKobayashi24HFEdit, LLMKobayashi24OpenAIEdit
-from attack_gec_metrics import get_bench, get_bench_ids
+from benchmark import get_bench, get_bench_ids
 import itertools
 import json
 import pprint

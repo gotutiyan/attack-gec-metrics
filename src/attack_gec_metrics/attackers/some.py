@@ -1,48 +1,37 @@
 from .base import AttackerBase
-from dataclasses import dataclass, field
-from gec_datasets import GECDatasets
+from dataclasses import dataclass
 from gec_metrics import get_metric
-import math
-import numpy as np
-from pathlib import Path
-import torch
-from tqdm import tqdm
-import json
-import pprint
-from tqdm import tqdm
 
 class AttackerForSOME(AttackerBase):
     @dataclass
     class Config(AttackerBase.Config):
-        data_ids: list[str] = field(
-            default_factory=lambda: [
-                'lang8-train',
-                'fce-train', 'wi-locness-train', 'nucle-train',
-                # 'troy-1bw-train', 'troy-blogs-train'
-            ]
-        )
-        index_dir: str = 'exp-datasets/index'
-        k: int = 256
+        # data_ids: list[str] = field(
+        #     default_factory=lambda: [
+        #         'lang8-train',
+        #         'fce-train', 'wi-locness-train', 'nucle-train',
+        #         # 'troy-1bw-train', 'troy-blogs-train'
+        #     ]
+        # )
+        corpus: list[str] = None
+        weight_g: float = 0.55
+        weight_f: float = 0.43
 
     def __init__(self, config=None) -> None:
         super().__init__(config)
-        Path(self.config.index_dir).mkdir(exist_ok=True, parents=True)
         some_cls = get_metric('some')
         self.some = some_cls(some_cls.Config(
-            weight_g=0.55,
-            weight_f=0.43,
-            weight_m=0,
-            batch_size=128
+            weight_g=self.config.weight_g,
+            weight_f=self.config.weight_f,
+            weight_m=0.0,  # ignore meaning score
+            batch_size=self.config.batch_size
         ))
-        gec = GECDatasets('exp-datasets')
-        self.srcs = []
-        self.text = []
-        self.config.data_ids = sorted(self.config.data_ids)
-        for data_id in self.config.data_ids:
-            self.srcs += gec.load(data_id).srcs
-            self.text += gec.load(data_id).refs[0]
+        # We ignore the meaning score, so srcs will not be used.
+        self.scores = self.some.score_sentence(
+            self.config.corpus,  # Just for interface, this will not be used.
+            self.config.corpus
+        )
+        self.best_hyp = self.config.corpus[self.scores.index(max(self.scores))]
         
     def correct(self, sources: list[str]) -> list[str]:
-        scores = self.some.score_sentence(self.srcs, self.text)
-        best_hyp = self.text[scores.index(max(scores))]
-        return [best_hyp] * len(sources)
+        # return the best sentence for all of inputs
+        return [self.best_hyp for _ in sources]

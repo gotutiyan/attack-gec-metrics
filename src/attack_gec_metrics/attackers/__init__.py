@@ -10,8 +10,9 @@ classes = [
     AttackerForSOME,
     AttackerForLLMSent
 ]
+__all__ = [c.__name__ for c in classes]
 id2class = {
-    c.__name__.lower().replace('attacker', ''): c for c in classes
+    c.__name__.lower().replace('attackerfor', ''): c for c in classes
 }
 
 def get_attacker_ids():

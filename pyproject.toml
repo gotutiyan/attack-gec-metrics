@@ -1,7 +1,7 @@
 [project]
 name = "attack-gec-metrics"
 version = "0.1.0"
-description = "Add your description here"
+description = "Code for the paper: Reliability Crisis of Reference-free Metrics for Grammatical Error Correction, EMNLP2025 Findings."
 readme = "README.md"
 authors = [
     { name = "gotuiyan" }
@@ -20,6 +20,3 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.uv.sources]
-gec-metrics = { path = "../gec-metrics", editable = true }

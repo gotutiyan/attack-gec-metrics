@@ -78,7 +78,9 @@ class BenchmarkBase(abc.ABC):
                 if isinstance(table[row_id][col_id], int):
                     elem = str(table[row_id][col_id])
                 elif isinstance(table[row_id][col_id], float):
-                    elem = f"{table[row_id][col_id]:.3f}".replace('0.', '.')
+                    elem = f"{table[row_id][col_id]:.3f}"
+                    if elem.startswith('0.'):
+                        elem = elem.replace('0.', '.')
                 else:
                     elem = table[row_id][col_id]
 
@@ -125,7 +127,9 @@ class BenchmarkBase(abc.ABC):
                 if isinstance(table[row_id][col_id], int):
                     elem = str(table[row_id][col_id])
                 elif isinstance(table[row_id][col_id], float):
-                    elem = f"{table[row_id][col_id]:.3f}".replace('0.', '.')
+                    elem = f"{table[row_id][col_id]:.3f}"
+                    if elem.startswith('0.'):
+                        elem = elem.replace('0.', '.')
                 else:
                     elem = table[row_id][col_id]
 
@@ -138,6 +142,30 @@ class BenchmarkBase(abc.ABC):
         lines = [' & '.join(elems) + ' \\\\' for elems in table]
         latex_table = '\n'.join(lines)
         return latex_table
+
+    def ensemble(self, all_scores: dict[str, dict[str, list[float]]]):
+        metrics = list(all_scores.keys())
+        score_types = list(all_scores[metrics[0]].keys())
+        num_systems = len(all_scores[metrics[0]][score_types[0]])
+        ens_scores = dict()  # will be {'trueskill': list[float], 'default': list[float]}
+        for s_type in score_types:
+            scores = [[] for _ in range(num_systems)]
+            for m in metrics:
+                if all_scores[m].get(s_type) is None:
+                    # LLM-S and LLM-E have only trueskill-based aggregation
+                    continue
+                this_scores = all_scores[m][s_type]  # length is num_systems
+                # convert negative ranks
+                sorted_scores = sorted(this_scores, reverse=True)
+                negative_ranks = [-(sorted_scores.index(s) + 1) for s in this_scores]
+                for system_id, n_rank in enumerate(negative_ranks):
+                    scores[system_id].append(n_rank)
+            # Average
+            print(f'Ensemble {len(scores[0])} metrics for score type {s_type}')
+            scores = [sum(s)/len(s) for s in scores]
+            ens_scores['ensemble'] = ens_scores.get('ensemble', dict())
+            ens_scores['ensemble'][s_type] = scores
+        return ens_scores
     
     def save_json(self, obj, name='data.json'):
         path = self.base_path / name

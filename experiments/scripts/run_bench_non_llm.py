@@ -1,4 +1,4 @@
-from attack_gec_metrics import get_bench, get_bench_ids
+from benchmark import get_bench, get_bench_ids
 from gec_metrics.metrics import SOME, Scribendi, IMPARA
 import argparse
 
