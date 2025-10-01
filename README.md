@@ -2,6 +2,15 @@
 
 This is the official repository of the following paper:
 ```
+@misc{goto2025reliabilitycrisisreferencefreemetrics,
+      title={Reliability Crisis of Reference-free Metrics for Grammatical Error Correction}, 
+      author={Takumi Goto and Yusuke Sakai and Taro Watanabe},
+      year={2025},
+      eprint={2509.25961},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2509.25961}, 
+}
 ```
 
 # Install
@@ -69,7 +78,7 @@ ID means the id for `get_attacker(HERE)`.
 from attack_gec_metrics import get_attacker
 attacker_cls = get_attacker('some')
 attacker = attacker_cls(attacker_cls.Config(
-    corpus=[],  # list[str], rThe best sentence will be choosen from this.
+    corpus=[],  # list[str], The best sentence will be chosen from this.
     weight_g=0.55,  # Weight for grammaticality
     weight_f=0.43,  # Weight for fluency
     batch_size=32
